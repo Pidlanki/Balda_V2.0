@@ -10,7 +10,7 @@
 #include <set>
 using namespace std;
 
-enum class ConsoleColor {
+enum ConsoleColor {
 	Black = 0,
 	Blue = 1,
 	Green = 2,
@@ -40,27 +40,12 @@ struct AI_Word {
 	vector<int> coordinates;
 };
 
-
-class Balda abstract {
-protected:
-	Points f_player, s_player;
-	
-	set <string> library;
-	
-	vector <string> used_words;
-public:
-	Balda() {}
-	//завантаження нового слова у текстовий файл словник
-	void add_to_lib(string word);
-	//завантаження словника з тхт в бінарне дерево
-	void load_words();
-};
-
 class Interface {
 protected:
-	const int ROW = 5;//змінні відповідальні за розмір поля
-	const int COL = 5;
-	char **table;
+	Points f_player, s_player;
+	int ROW = 5;//змінні відповідальні за розмір поля
+	int COL = 5;
+	vector<vector<char>>table;
 	ConsoleColor background;
 	int text;
 public:
@@ -71,17 +56,39 @@ public:
 	void show_2menu();
 	void load_title();
 	void fill_play_table();
-	void show_play_field()
+	void show_play_field();
+	//перевірка на вільні клітитки на столі
+	bool checking_free_places();
 };
 
-class PVP_logic : public Balda, public Interface{
-
-public:
-
-};
-
-class VSAI_logic : public Balda, public Interface {
-	vector <AI_Word> ai_words;
-public:
-
-};
+//class Balda : public Interface {
+//protected:
+//	
+//	
+//	set <string> library;
+//	
+//	vector <string> used_words;
+//public:
+//	Balda() {}
+//	//завантаження нового слова у текстовий файл словник
+//	void add_to_lib(string word);
+//	//завантаження словника з тхт в бінарне дерево
+//	void load_words();
+//	void game(string f_word);
+//};
+//
+//
+//
+//class Player_logic : public Balda{
+//
+//public:
+//	//перевірка коректності вводу координат
+//	bool check_pos();
+//	
+//};
+//
+//class AI_logic : public Balda {
+//	vector <AI_Word> ai_words;
+//public:
+//
+//};
