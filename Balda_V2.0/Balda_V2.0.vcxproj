@@ -145,7 +145,9 @@
     <ClInclude Include="Balda.h" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="custom_words.txt" />
     <Text Include="title.txt" />
+    <Text Include="words.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

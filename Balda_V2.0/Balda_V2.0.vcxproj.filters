@@ -29,5 +29,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="title.txt" />
+    <Text Include="words.txt" />
+    <Text Include="custom_words.txt" />
   </ItemGroup>
 </Project>
