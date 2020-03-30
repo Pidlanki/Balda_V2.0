@@ -1,14 +1,13 @@
 #pragma once
 #include <iostream>
-#include "windows.h" //для коректної укр мови та зміни кольрів у консолі
-#include <ctime> //для рандомного пошуку
-#include <fstream> // для файлового ввода/вивода
-#include <string> // Шаблонний клас стрінг
+#include "windows.h" //for correct ua language and color changes function in the console
+#include <ctime> //for random search
+#include <fstream> // for file I / O
+#include <string> // template class string
 #include <vector>
-#include <iterator> // заголовочний файл ітераторів
+#include <iterator> // iterator header file
 #include <stack>
-#include <set>
-#include <array>
+#include <set> //binary tree for custom words
 using namespace std;
 
 enum ConsoleColor {
@@ -44,7 +43,7 @@ struct AI_Word {
 class Interface {
 protected:
 	Points f_player, s_player;
-	int ROW = 5;//змінні відповідальні за розмір поля
+	int ROW = 5;//variables are responsible for the size of the field
 	int COL = 5;
 	vector<vector<char>>table;
 
@@ -58,7 +57,7 @@ public:
 	void show_2menu();
 	
 	void show_play_field();
-	//перевірка на вільні клітитки на столі
+	//check for free cells on the table
 	bool checking_free_places();
 };
 
@@ -67,43 +66,42 @@ protected:
 	bool difficulty;
 	set<string> custom_library;
 	vector <string> library;
-	string current_word; //поточне зібране слово
+	string current_word; //the current word collected
 	string custom_words_file_name = "custom_words.txt",
 		words_file_name = "words.txt";
 	vector <string> used_words;
-	//масив використаних клітинок під час поточного ходу
+	//the array of cells used during the current turn
 	vector<int> moves;
-	int step_count;//лічильник ходів
-	int x, y; //координати активної клітинки стола
-	int temp_x, temp_y; // тимчасові змінні для запам'ятовування клітинки з всталеною буквою
+	int step_count;//counter moves
+	int x, y; //coordinates of active table cell
+	int temp_x, temp_y; // temporary variables to remember the cell with the letter inserted
 	
 public:
 	Main_logic();
-	//завантаження нового слова у текстовий файл словник
+	//upload a new word to a text file dictionary
 	void add_to_lib(string word);
-	//завантаження словника з тхт в бінарне дерево
+	//download dictionary from txt to binary tree
 	void load_words(string file_name);
 	char game_menu();
-	//основний метод гри
+	//the main method of game
 	void game(string f_word);
-	//логіка одного ходу людини
+	//logic of one turn of the player
 	void moving();
-	//процес переміщення на одну клітинку в один з 4 боків
+	//the process of moving to one cell in one of 4 directions
 	bool make_move(int x, int y, bool& is_new_lat_used);
-	//процес вводу першої букви
+	//the process of entering the first letter
 	void make_first_move(bool& is_new_lat_used);
-	//логіка кінця ходу
+	//end-of-turn logic
 	bool end_turn(bool& is_new_lat_used);
-	//перевірка коректності вводу координат
+	//check the correctness of the input coordinates
 	bool check_pos();
-	//перевірка на повторне використання клітинки в одному ходу
+	//check for cell reuse in one turn
 	bool ch_past_pos(int x, int y);
-	//вставляє перше слово
-	
+	//inserts the first word
 	void first_word_initialization(string f_word);
-	//нарахування очок
+	//Scoring
 	void counting_points();
-	//перевірка на переможця
+	//check on the winner
 	void checks_for_winner();
 };
 

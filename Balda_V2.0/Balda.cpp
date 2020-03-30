@@ -13,13 +13,13 @@ void Interface::SetColor(int text, ConsoleColor background) {
 }
 
 void Interface::show_1menu() {
-	cout << "Оберіть режим:\n"
-		<< "a. 2 гравці    b. проти комп'ютера\n>>";
+	cout << "Select a mode:\n"
+		<< "a. 2 players    b. VS computer\n>>";
 }
 
 void Interface::show_2menu() {
-	cout << "Є баг, якщо компу треба вставити букву посеред слова він очищає частково стіл\nОберіть рівень інтелекту комп'тера:\n"
-		<< "a. легкий    b. середній(не зроблено)	c. важкий(не зроблено)\n>> ";
+	cout << "Select the AI level:\n"
+		<< "a. standart    b. hard\n>> ";
 }
 
 void Interface::load_title() {
@@ -72,18 +72,18 @@ void Interface::show_play_field() {
 		cout << endl;
 	}
 	SetColor(Blue, Black);
-	cout << "Слова 1-го гравця: ";
+	cout << "1st player words: ";
 	for (int i = 0; i < f_player.pl_words.size(); i++) {
 		cout << f_player.pl_words[i] << ", ";
 	}
 	cout << "\b\b." << endl;
-	cout << "Очки: " << f_player.player_points << endl;
-	cout << "Слова 2-го гравця: ";
+	cout << "Points: " << f_player.player_points << endl;
+	cout << "2nd player words: ";
 	for (int i = 0; i < s_player.pl_words.size(); i++) {
 		cout << s_player.pl_words[i] << ", ";
 	}
 	cout << "\b\b." << endl;
-	cout << "Очки: " << s_player.player_points << endl;
+	cout << "Points: " << s_player.player_points << endl;
 	cout << endl;
 }
 
@@ -141,10 +141,10 @@ char Main_logic::game_menu() {
 	char ch = 'y';
 	string f_word;
 	bool loop_end = 0;
-	cout << "Введіть перше слово з п'яти букв, або натисніть клавішу \"r\" для вибору випадкового слова\n>>";
+	cout << "Enter the first five-letter word, or press \"r\" to select a random word\n>>";
 	do {
 		do {
-			if (ch == 'n') cout << "Введіть ще раз перше слово(воно має містити точно " << COL << " літер)\n>>";
+			if (ch == 'n') cout << "Please re-enter the first word (it must contain exactly " << COL << " leters)\n>>";
 			cin >> f_word;
 			/*if (f_word.size() != 5 && f_word != "r")
 				cout << "Введіть слово яке містить 5 букв, або літеру \"r\"\n>>";*/
@@ -153,7 +153,7 @@ char Main_logic::game_menu() {
 		auto temp_f_word = find(library.begin(), library.end(), f_word);
 		auto custom_f_word_temp = custom_library.find(current_word);
 		if (f_word != "r" && temp_f_word == library.end() && custom_f_word_temp == custom_library.end()) {
-			cout << "Cлова \"" << f_word << "\" немає в словнику, хочете додати його в словник?\n(y/n)>> ";
+			cout << "The word \"" << f_word << "\" is not in the dictionary, want to add it to the dictionary?\n(y/n)>> ";
 			cin >> ch;
 			if (ch == 'y') { add_to_lib(f_word); loop_end = 1; }
 			continue;
@@ -162,7 +162,7 @@ char Main_logic::game_menu() {
 	} while (!loop_end);
 	
 	game(f_word);
-	cout << "Хочете зіграти ще? \n(y/n)>> ";
+	cout << "Want to play again? \n(y/n)>> ";
 	cin >> ch;
 	return ch;
 }
@@ -176,7 +176,7 @@ void Main_logic::game(string f_word) {
 		//cout << endl;
 		step_count++;
 		SetColor(Red, Black);
-		(step_count % 2) ? (cout << "Ходить 1-й гравець:\n") : (cout << "Ходить 2-й гравець:\n");
+		(step_count % 2) ? (cout << "The 1st player turn:\n") : (cout << "The 2nd player turn:\n");
 		SetColor(Blue, Black);
 		moving();
 		counting_points();
@@ -193,11 +193,11 @@ void Main_logic::moving() {
 
 	do {
 		if (count == 0) {
-			cout << "Введіть координати початковаї клітинки, використовуючи пробіл\n>> ";
+			cout << "Enter the coordinates of the original cell using the space bar\n>> ";
 			do {
 				cin >> x >> y;
 				if (check_pos())
-					cout << "Невірні координати, введіть координати клітинки яка знаходиться по сусідству з іншою літерою для утворення слова\n>> ";
+					cout << "Invalid coordinates, enter the coordinates of the cell next to another letter to form a word\n>> ";
 			} while (check_pos());
 		}
 		//чи не занята клітинка
@@ -205,7 +205,7 @@ void Main_logic::moving() {
 			make_first_move(is_new_lat_used);
 			count++;
 		}
-		cout << "Наступний хід\n>> ";
+		cout << "Next move\n>> ";
 		cin >> move;
 		switch (move)//процес переміщення по дошці
 		{
@@ -214,14 +214,14 @@ void Main_logic::moving() {
 				count++;
 				x--;
 			}
-			else cout << "Невірні координати, або ця клітинка вже використовується. Спробуйте ще!\n";
+			else cout << "Invalid coordinates, or this cell is already in use. Try again!\n";
 			break;
 		case 'd':
 			if (make_move(x, y + 1, is_new_lat_used)) {
 				count++;
 				y++;
 			}
-			else cout << "Невірні координати, або ця клітинка вже використовується. Спробуйте ще!\n";
+			else cout << "Invalid coordinates, or this cell is already in use. Try again!\n";
 			
 			break;
 		case 's':
@@ -229,14 +229,14 @@ void Main_logic::moving() {
 				count++;
 				x++;
 			}
-			else cout << "Невірні координати, або ця клітинка вже використовується. Спробуйте ще!\n";
+			else cout << "Invalid coordinates, or this cell is already in use. Try again!\n";
 			break;
 		case 'a':
 			if (make_move(x, y - 1, is_new_lat_used)) {
 				count++;
 				y--;
 			}		
-			else cout << "Невірні координати, або ця клітинка вже використовується. Спробуйте ще!\n";
+			else cout << "Invalid coordinates, or this cell is already in use. Try again!\n";
 			break;
 		case 'Q':
 			if (end_turn(is_new_lat_used)) {
@@ -261,7 +261,7 @@ bool Main_logic::make_move(int x, int y, bool& is_new_lat_used) {
 		return true;
 	}
 	else if (table[x][y] == '-' && x >= 0 && !is_new_lat_used) {
-		cout << "Введіть літеру\n>> ";
+		cout << "Enter a letter\n>> ";
 		cin >> letter;
 		current_word += letter;
 		table[x][y] = letter;
@@ -279,7 +279,7 @@ bool Main_logic::make_move(int x, int y, bool& is_new_lat_used) {
 void Main_logic::make_first_move(bool& is_new_lat_used) {
 	char letter;
 	if (table[x][y] == '-') {
-		cout << "Введіть першу літеру\n>> ";
+		cout << "Enter the first letter\n>> ";
 		cin >> letter;
 		current_word += letter;
 		table[x][y] = letter;
@@ -303,7 +303,7 @@ bool Main_logic::end_turn(bool& is_new_lat_used) {
 	auto temp_used_fwords = find(f_player.pl_words.begin(), f_player.pl_words.end(), current_word);
 	auto temp_used_swords = find(s_player.pl_words.begin(), s_player.pl_words.end(), current_word);
 	if (temp_used_fwords != f_player.pl_words.end() || temp_used_swords != s_player.pl_words.end()) {
-		cout << "Це слово вже використовувалось, думайте далі! Aбо пропускайте хід(\"E\")\n>>";
+		cout << "This word has already been used, think further! Or skip the turn(\"E\")\n>>";
 		cin >> move;
 		if (is_new_lat_used) table[temp_x][temp_y] = '-';
 		is_new_lat_used = 0;
@@ -315,14 +315,14 @@ bool Main_logic::end_turn(bool& is_new_lat_used) {
 		return 1;
 	}
 	else if (lib_temp == library.end() && custom_lib_temp == custom_library.end()) {
-		cout << "Cлова \"" << current_word << "\" немає в словнику, хочете додати його в словник?\n(y/n)>> ";
+		cout << "The word \"" << current_word << "\" is not in the dictionary, want to add it to the dictionary?\n(y/n)>> ";
 		cin >> move;
 		if (move == 'y') {
 			add_to_lib(current_word);
 			return 1;
 		}
 		else if (move == 'n') {
-			cout << "Подумайте ще, aбо натисніть \"E\" для пропуска ходу\n>> ";
+			cout << "Think better, or press \"E\" to skip the turn\n>> ";
 			cin >> move;
 			if (is_new_lat_used) table[temp_x][temp_y] = '-';
 			is_new_lat_used = 0;
@@ -387,7 +387,7 @@ void Main_logic::counting_points() {
 }
 
 void Main_logic::checks_for_winner() {
-	if (f_player.player_points > s_player.player_points) cout << "Перший гравець переміг!\n";
-	else if (f_player.player_points < s_player.player_points) cout << "Другий гравець переміг!\n";
-	else cout << "Нічия!\n";
+	if (f_player.player_points > s_player.player_points) cout << "The first player wins!\n";
+	else if (f_player.player_points < s_player.player_points) cout << "The second player won!\n";
+	else cout << "Draw!\n";
 }

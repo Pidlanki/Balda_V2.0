@@ -4,7 +4,7 @@ int main() {
 	srand(time(NULL));
 	SetConsoleCP(1251);
 	SetConsoleOutputCP(1251);
-	
+
 	char ch;
 	string f_word;
 
