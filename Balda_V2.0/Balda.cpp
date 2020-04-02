@@ -37,6 +37,10 @@ void Interface::load_title() {
 				SetColor(LightGreen, Black);
 				cout << buff[i];
 			}
+			else if (buff[i] == ':'){
+				SetColor(Yellow, Black);
+				cout << buff[i];
+			}
 			else {
 				SetColor(Blue, Black);
 				cout << buff[i];
@@ -150,8 +154,6 @@ char Main_logic::game_menu() {
 		do {
 			if (ch == 'n') cout << "Please re-enter the first word (it must contain exactly " << COL << " leters)\n>>";
 			cin >> f_word;
-			/*if (f_word.size() != 5 && f_word != "r")
-				cout << "¬вед≥ть слово €ке м≥стить 5 букв, або л≥теру \"r\"\n>>";*/
 		} while (f_word.size() != 5 && f_word != "r");
 		//vector<string>::iterator r = find(library.begin(), library.end(), f_word);
 		auto temp_f_word = find(library.begin(), library.end(), f_word);
@@ -189,12 +191,9 @@ void Main_logic::game(string f_word) {
 }
 
 void Main_logic::moving() {
-	//string word;
 	char move, letter;
 	int count = 0;
 	bool is_new_lat_used = 0;
-	//vector<int> stack_moves;
-
 	do {
 		if (count == 0) {
 			cout << "Enter the coordinates of the original cell using the space bar\n>> ";
@@ -247,7 +246,13 @@ void Main_logic::moving() {
 				count = 0;
 				moves.clear();
 				return;
-			} 
+			}
+			else {
+				count = 0;
+				moves.clear();
+				step_count--;
+				return;
+			}
 			break;
 		default:
 			break;
@@ -316,7 +321,7 @@ bool Main_logic::end_turn(bool& is_new_lat_used) {
 		system("pause");
 		system("cls");
 		show_play_field();
-		return 1;
+		return 0;
 	}
 	else if (lib_temp == library.end() && custom_lib_temp == custom_library.end()) {
 		cout << "The word \"" << current_word << "\" is not in the dictionary, want to add it to the dictionary?\n(y/n)>> ";
@@ -334,7 +339,7 @@ bool Main_logic::end_turn(bool& is_new_lat_used) {
 			system("cls");
 			show_play_field();
 			if (move == 'E') return 1;
-			return 1;
+			return 0;
 		}
 	}
 	else  return 1;
@@ -353,8 +358,6 @@ bool Main_logic::check_pos() {
 			if (table[x][y - 1] != '-' && !ch_past_pos(y - 1, y)) l = 1;
 		if (u == 1 || d == 1 || l == 1 || r == 1) return false;
 		else return true;
-		/*if ((x + 1 < COL && !ch_past_pos(x + 1, y)) || (x - 1 >= 0 && !ch_past_pos(x - 1, y))
-			|| (y + 1 < ROW && !ch_past_pos(y + 1, y)) || (x - 1 >= 0 && !ch_past_pos(y - 1, y))) return false;*/
 	}
 	else return true;
 }
@@ -399,10 +402,10 @@ void Main_logic::checks_for_winner() {
 //--------------------------------AI_logic-------------------------------------//
 //-----------------------------------------------------------------------------//
 
-AI_logic::AI_logic(): difficulty(0), new_letter(0), moves_count(0), Main_logic() {
+AI_logic::AI_logic(): difficulty(0), moves_count(0), Main_logic() {
 }
 
-AI_logic::AI_logic(bool difficulty) : difficulty(difficulty), moves_count(0), new_letter(0), Main_logic() {
+AI_logic::AI_logic(bool difficulty) : difficulty(difficulty), moves_count(0), Main_logic() {
 }
 
 void AI_logic::game(string f_word) {
@@ -416,8 +419,6 @@ void AI_logic::game(string f_word) {
 		(step_count % 2) ? (cout << "The Human player turn:\n") : (cout << "The AI player turn:\n");
 		SetColor(Blue, Black);
 		(step_count % 2) ? moving() : ai_moving();
-		/*forming_matrix();
-		system("pause");*/
 		counting_points();
 	} while (checking_free_places());
 	checks_for_winner();
@@ -429,8 +430,8 @@ void AI_logic::ai_moving() {
 	int new_x, new_y;
 	for (size_t i = 0; i < ROW; i++) {
 		for (size_t j = 0; j < COL; j++) {
-			if (matrix[i][j] == 48) continue;
-			new_x = -1; new_y = -1;
+			if (matrix[i][j] == 48) continue; //if 0 continue
+			new_x = -1; new_y = -1; // coordinates of new letter -1 - mean new letter dosn't used yet
 			temp_word.clear();
 			ai_temp_words.pc_moves.first.clear();
 			ai_temp_words.pc_moves.second.clear();
@@ -440,7 +441,6 @@ void AI_logic::ai_moving() {
 	filter();
 	if (!ai_words.words.empty()) {
 		choose_word();
-		
 	}
 	else {
 		cout << "I'm passing this turn\n";
@@ -457,6 +457,7 @@ void AI_logic::forming_matrix() {
 				else matrix[i].push_back(63);
 			else if (table[i][j] != '-') {
 				matrix[i].push_back(table[i][j]);
+				//max length of word can't be more then number of letters in the field + 1 or 10
 				if (ai_temp_words.cur_max_len < ai_temp_words.max_length - 1) ai_temp_words.cur_max_len++;
 			}
 		}
@@ -480,47 +481,29 @@ bool AI_logic::check_neighbors(int x, int y) {
 
 void AI_logic::find_words(int x, int y, int new_x, int new_y, string temp_word) {
 	if (temp_word.size() >= ai_temp_words.cur_max_len) return;
-	auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x);
-	auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y);
-	if ((find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()) && matrix[x][y] == 63 && new_x == -1) {
+	
+	if (check_next_position(x, y, new_x) == 2) {
 		temp_word += matrix[x][y];
 		new_x = x;
 		new_y = y;
-		if (temp_word.size() > 1) {
+		if (temp_word.size() > 1) { //word can't be less than 2 letters
 			ai_temp_words.words.push(temp_word);
 			ai_temp_words.coordinates.first.push(new_x);
 			ai_temp_words.coordinates.second.push(new_y);
 			ai_temp_words.pc_moves.first.push_back(x);
 			ai_temp_words.pc_moves.second.push_back(y);
 		}
-		if (x + 1 < ROW) {
-			auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x + 1);
-			auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y);
-			if (matrix[x + 1][y] != 63 && matrix[x + 1][y] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
-				find_words(x + 1, y, new_x, new_y, temp_word);
-		}
-			
-		if (x - 1 > 0) {
-			auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x - 1);
-			auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y);
-			if (matrix[x - 1][y] != 63 && matrix[x - 1][y] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
-				find_words(x - 1, y, new_x, new_y, temp_word);
-		}
-		if (y + 1 < COL) {
-			auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x);
-			auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y + 1);
-			if (matrix[x][y + 1] != 63 && matrix[x][y + 1] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
-				find_words(x, y + 1, new_x, new_y, temp_word);
-		}
-		if (y - 1 > 0) {
-			auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x);
-			auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y - 1);
-			if (matrix[x][y - 1] != 63 && matrix[x][y - 1] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
-				find_words(x, y - 1, new_x, new_y, temp_word);
-		}
+		if (check_next_position(x + 1, y, new_x) == 1)
+			find_words(x + 1, y, new_x, new_y, temp_word);
+		if (check_next_position(x - 1, y, new_x) == 1)
+			find_words(x - 1, y, new_x, new_y, temp_word);
+		if (check_next_position(x, y + 1, new_x) == 1)
+			find_words(x, y + 1, new_x, new_y, temp_word);
+		if (check_next_position(x, y - 1, new_x) == 1)
+			find_words(x, y - 1, new_x, new_y, temp_word);
 		return;
 	}
-	else if (matrix[x][y] != 63 && matrix[x][y] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end())) {
+	else if (check_next_position(x, y, new_x) == 1) {
 		temp_word += matrix[x][y];
 		if (new_x != -1 && temp_word.size() > 1) {
 			ai_temp_words.words.push(temp_word);
@@ -529,39 +512,14 @@ void AI_logic::find_words(int x, int y, int new_x, int new_y, string temp_word) 
 			ai_temp_words.pc_moves.first.push_back(x);
 			ai_temp_words.pc_moves.second.push_back(y);
 		}
-		if (x + 1 < ROW) {
-			auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x + 1);
-			auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y);
-			if (matrix[x + 1][y] != 63 && matrix[x + 1][y] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
-				find_words(x + 1, y, new_x, new_y, temp_word);
-			else if (matrix[x + 1][y] == 63 && new_x == -1 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
-				find_words(x + 1, y, new_x, new_y, temp_word);
-		}
-
-		if (x - 1 > 0) {
-			auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x - 1);
-			auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y);
-			if (matrix[x - 1][y] != 63 && matrix[x - 1][y] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
-				find_words(x - 1, y, new_x, new_y, temp_word);
-			else if (matrix[x - 1][y] == 63 && new_x == -1 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
-				find_words(x - 1, y, new_x, new_y, temp_word);
-		}
-		if (y + 1 < COL) {
-			auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x);
-			auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y + 1);
-			if (matrix[x][y + 1] != 63 && matrix[x][y + 1] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
-				find_words(x, y + 1, new_x, new_y, temp_word);
-			else if (matrix[x][y + 1] == 63 && new_x == -1 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
-				find_words(x, y + 1, new_x, new_y, temp_word);
-		}
-		if (y - 1 > 0) {
-			auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x);
-			auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y - 1);
-			if (matrix[x][y - 1] != 63 && matrix[x][y - 1] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
-				find_words(x, y - 1, new_x, new_y, temp_word);
-			else if (matrix[x][y - 1] == 63 && new_x == -1 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
-				find_words(x, y - 1, new_x, new_y, temp_word);
-		}
+		if (check_next_position(x + 1, y, new_x) == 1 || check_next_position(x + 1, y, new_x) == 2)
+			find_words(x + 1, y, new_x, new_y, temp_word);
+		if (check_next_position(x - 1, y, new_x) == 1 || check_next_position(x - 1, y, new_x) == 2)
+			find_words(x - 1, y, new_x, new_y, temp_word);
+		if (check_next_position(x, y + 1, new_x) == 1 || check_next_position(x, y + 1, new_x) == 2)
+			find_words(x, y + 1, new_x, new_y, temp_word);
+		if (check_next_position(x - 1, y, new_x) == 1 || check_next_position(x, y - 1, new_x) == 2)
+			find_words(x, y - 1, new_x, new_y, temp_word);
 		return;
 	}
 
@@ -571,23 +529,25 @@ void AI_logic::filter() {
 	string temp_word;
 	string let;
 	while (!ai_temp_words.words.empty()) {
-		for (char i = 97; i <= 122; i++) {
-			let = i;
+		for (char i = 97; i <= 122; i++) { //english alphabet of small letters
+			let = i; // function string::replace can't take a char 
 			temp_word = ai_temp_words.words.front();
-			temp_word.replace(temp_word.find('?'), 1, let);
+			temp_word.replace(temp_word.find('?'), 1, let); //replace ? by letter of english alphabet
 
 			auto lib_temp = find(library.begin(), library.end(), temp_word);
 			auto custom_lib_temp = custom_library.find(temp_word);
 			auto temp_used_fwords = find(f_player.pl_words.begin(), f_player.pl_words.end(), temp_word);
 			auto temp_used_swords = find(s_player.pl_words.begin(), s_player.pl_words.end(), temp_word);
 			if (temp_used_fwords == f_player.pl_words.end() && temp_used_swords == s_player.pl_words.end())
-				if (lib_temp != library.end() || custom_lib_temp != custom_library.end()) {
+				// if find word add to confirmed letter combinations array
+				if (lib_temp != library.end() || custom_lib_temp != custom_library.end()) { 
 					ai_words.words.push_back(temp_word);
-					ai_words.letters.push_back(i);
-					ai_words.letter_coordinates.first.push_back(ai_temp_words.coordinates.first.front());
-					ai_words.letter_coordinates.second.push_back(ai_temp_words.coordinates.second.front());
+					ai_words.letters.push_back(i); // new lleter
+					ai_words.letter_coordinates.first.push_back(ai_temp_words.coordinates.first.front()); //coordinates of new letter by row
+					ai_words.letter_coordinates.second.push_back(ai_temp_words.coordinates.second.front());//coordinates of new letter by col
 				}
 		}
+		//delete temporary data
 		ai_temp_words.coordinates.first.pop();
 		ai_temp_words.coordinates.second.pop();
 		ai_temp_words.words.pop();
@@ -604,4 +564,16 @@ void AI_logic::choose_word() {
 	ai_words.letters.clear();
 	ai_words.letter_coordinates.first.clear();
 	ai_words.letter_coordinates.second.clear();
+}
+
+int AI_logic::check_next_position(int x, int y, int new_x) {
+	if (x < ROW && y < COL && x >= 0 && y >= 0) {
+		auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x);
+		auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y);
+		if (matrix[x][y] != 63 && matrix[x][y] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
+			return 1;
+		else if (matrix[x][y] == 63 && new_x == -1 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
+			return 2;
+	}
+	return 0;
 }

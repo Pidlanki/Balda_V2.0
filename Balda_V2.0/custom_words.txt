@@ -5,3 +5,4 @@ tur
 aamon
 gone
 role
+nack

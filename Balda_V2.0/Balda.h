@@ -6,9 +6,7 @@
 #include <string> // template class string
 #include <vector>
 #include <iterator> // iterator header file
-#include <stack>
 #include <queue>
-#include <map>
 #include <set> //binary tree for custom words
 using namespace std;
 
@@ -30,19 +28,20 @@ enum ConsoleColor {
 	Yellow = 14,
 	White = 15
 };
+//for counting player points
 struct Points {//
 	int player_points = 0;
 	vector<string> pl_words;
 };
+//for unfiltered letter combinations
 struct temp_AI_Word {
 	queue<string> words;
 	pair<queue<int>, queue<int>>coordinates;
 	pair<vector<int>, vector<int>>pc_moves;
-	
 	int max_length = 10;
 	int cur_max_len;
 };
-
+//for confirmed letter combinations
 struct AI_Word {
 	vector<string> words;
 	pair<vector<int>, vector<int>>letter_coordinates;
@@ -84,11 +83,12 @@ protected:
 	
 public:
 	Main_logic();
+	char game_menu();
+protected:
 	//upload a new word to a text file dictionary
 	void add_to_lib(string word);
 	//download dictionary from txt to binary tree
 	void load_words(string file_name);
-	char game_menu();
 	//the main method of game
 	virtual void game(string f_word);
 	//logic of one turn of the player
@@ -113,22 +113,30 @@ public:
 
 
 class AI_logic : public Main_logic {
-	bool difficulty;
-	AI_Word ai_words;
-	temp_AI_Word ai_temp_words;
-	vector<vector<char>> matrix;
-	bool new_letter;
-	
-	int moves_count;
+	bool difficulty; //not implemented
+	AI_Word ai_words;//for confirmed letter combinations
+	temp_AI_Word ai_temp_words;//for unfiltered letter combinations
+	vector<vector<char>> matrix; //for forming the adjacency matrix when working with graphs
+	int moves_count;//counts the number of movements in the turn
 public:
 	AI_logic();
-	AI_logic(bool difficulty);
-
+	AI_logic(bool difficulty);//not implemented
+protected:
+	//the main method of game
 	void game(string f_word) override;
+	//logic of one turn of the AI
 	void ai_moving();
+	//forming the adjacency matrix for graph depth search algorithm
 	void forming_matrix();
+	//checking adjacent cells during matrix formation
 	bool check_neighbors(int x, int y);
+	//find unfiltered combinations of letters using graph depth search algorithm
 	void find_words(int x, int y, int new_x, int new_y, string temp_word);
+	// filtering combinations of letters by finding words in library
 	void filter();
+	//select a random word from a finite array of found words
 	void choose_word();
+	//check the correctness of the transmitted matrix coordinates during the 
+	//graph depth search algorithm is working
+	int check_next_position(int x, int y, int new_x);
 };
