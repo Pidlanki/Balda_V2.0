@@ -7,6 +7,8 @@
 #include <vector>
 #include <iterator> // iterator header file
 #include <stack>
+#include <queue>
+#include <map>
 #include <set> //binary tree for custom words
 using namespace std;
 
@@ -30,14 +32,21 @@ enum ConsoleColor {
 };
 struct Points {//
 	int player_points = 0;
-	//int size = 0;
-	//string* pl_words = new string[size];
 	vector<string> pl_words;
+};
+struct temp_AI_Word {
+	queue<string> words;
+	pair<queue<int>, queue<int>>coordinates;
+	pair<vector<int>, vector<int>>pc_moves;
+	
+	int max_length = 10;
+	int cur_max_len;
 };
 
 struct AI_Word {
-	string word;
-	vector<int> coordinates;
+	vector<string> words;
+	pair<vector<int>, vector<int>>letter_coordinates;
+	vector<char> letters;
 };
 
 class Interface {
@@ -47,13 +56,13 @@ protected:
 	int COL = 5;
 	vector<vector<char>>table;
 
-	void load_title();
-	void fill_play_table();
+	
 public:
 	Interface();
-
+	void load_title();
+	void fill_play_table();
 	void SetColor(int text, ConsoleColor background);
-	void show_1menu();
+	static void show_1menu();
 	void show_2menu();
 	
 	void show_play_field();
@@ -63,15 +72,12 @@ public:
 
 class Main_logic : public Interface {
 protected:
-	bool difficulty;
 	set<string> custom_library;
 	vector <string> library;
 	string current_word; //the current word collected
 	string custom_words_file_name = "custom_words.txt",
 		words_file_name = "words.txt";
-	vector <string> used_words;
-	//the array of cells used during the current turn
-	vector<int> moves;
+	vector<int> moves;//the array of cells used during the current turn
 	int step_count;//counter moves
 	int x, y; //coordinates of active table cell
 	int temp_x, temp_y; // temporary variables to remember the cell with the letter inserted
@@ -84,7 +90,7 @@ public:
 	void load_words(string file_name);
 	char game_menu();
 	//the main method of game
-	void game(string f_word);
+	virtual void game(string f_word);
 	//logic of one turn of the player
 	void moving();
 	//the process of moving to one cell in one of 4 directions
@@ -106,8 +112,23 @@ public:
 };
 
 
-//class AI_logic : public Balda {
-//	vector <AI_Word> ai_words;
-//public:
-//
-//};
+class AI_logic : public Main_logic {
+	bool difficulty;
+	AI_Word ai_words;
+	temp_AI_Word ai_temp_words;
+	vector<vector<char>> matrix;
+	bool new_letter;
+	
+	int moves_count;
+public:
+	AI_logic();
+	AI_logic(bool difficulty);
+
+	void game(string f_word) override;
+	void ai_moving();
+	void forming_matrix();
+	bool check_neighbors(int x, int y);
+	void find_words(int x, int y, int new_x, int new_y, string temp_word);
+	void filter();
+	void choose_word();
+};

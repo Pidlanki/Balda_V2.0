@@ -1,10 +1,10 @@
 #include "Balda.h"
 
 
-
+//-----------------------------------------------------------------------------//
+//-------------------------------Interface-------------------------------------//
+//-----------------------------------------------------------------------------//
 Interface::Interface() {
-	load_title();
-	fill_play_table();
 }
 
 void Interface::SetColor(int text, ConsoleColor background) {
@@ -95,8 +95,11 @@ bool Interface::checking_free_places() {
 	}
 	return 0;
 }
+//-----------------------------------------------------------------------------//
+//-------------------------------Main_logic------------------------------------//
+//-----------------------------------------------------------------------------//
 
-Main_logic::Main_logic(): step_count(0), x(0), y(0), temp_x(0), temp_y(0), Interface() {
+Main_logic::Main_logic(): step_count(0), x(0), y(0), temp_x(0), temp_y(0) {
 	load_words(custom_words_file_name);
 	load_words(words_file_name);
 }
@@ -138,6 +141,7 @@ void Main_logic::load_words(string file_name) {
 }
 
 char Main_logic::game_menu() {
+	fill_play_table();
 	char ch = 'y';
 	string f_word;
 	bool loop_end = 0;
@@ -390,4 +394,214 @@ void Main_logic::checks_for_winner() {
 	if (f_player.player_points > s_player.player_points) cout << "The first player wins!\n";
 	else if (f_player.player_points < s_player.player_points) cout << "The second player won!\n";
 	else cout << "Draw!\n";
+}
+//-----------------------------------------------------------------------------//
+//--------------------------------AI_logic-------------------------------------//
+//-----------------------------------------------------------------------------//
+
+AI_logic::AI_logic(): difficulty(0), new_letter(0), moves_count(0), Main_logic() {
+}
+
+AI_logic::AI_logic(bool difficulty) : difficulty(difficulty), moves_count(0), new_letter(0), Main_logic() {
+}
+
+void AI_logic::game(string f_word) {
+	first_word_initialization(f_word);
+	do {
+		current_word.clear();
+		show_play_field();
+		
+		step_count++;
+		SetColor(Red, Black);
+		(step_count % 2) ? (cout << "The Human player turn:\n") : (cout << "The AI player turn:\n");
+		SetColor(Blue, Black);
+		(step_count % 2) ? moving() : ai_moving();
+		/*forming_matrix();
+		system("pause");*/
+		counting_points();
+	} while (checking_free_places());
+	checks_for_winner();
+}
+
+void AI_logic::ai_moving() {
+	forming_matrix();
+	string temp_word;
+	int new_x, new_y;
+	for (size_t i = 0; i < ROW; i++) {
+		for (size_t j = 0; j < COL; j++) {
+			if (matrix[i][j] == 48) continue;
+			new_x = -1; new_y = -1;
+			temp_word.clear();
+			ai_temp_words.pc_moves.first.clear();
+			ai_temp_words.pc_moves.second.clear();
+			find_words(i, j, new_x, new_y, temp_word);
+		}
+	}
+	filter();
+	if (!ai_words.words.empty()) {
+		choose_word();
+		
+	}
+	else {
+		cout << "I'm passing this turn\n";
+		system("pause");
+	}
+}
+
+void AI_logic::forming_matrix() {
+	for (size_t i = 0; i < ROW; i++) {
+		matrix.push_back(vector<char>());
+		for (size_t j = 0; j < COL; j++) {
+			if (table[i][j] == '-')
+				if (!check_neighbors(i, j)) matrix[i].push_back(48);
+				else matrix[i].push_back(63);
+			else if (table[i][j] != '-') {
+				matrix[i].push_back(table[i][j]);
+				if (ai_temp_words.cur_max_len < ai_temp_words.max_length - 1) ai_temp_words.cur_max_len++;
+			}
+		}
+	}
+	ai_temp_words.cur_max_len++;//for new letter
+}
+
+bool AI_logic::check_neighbors(int x, int y) {
+	bool r = 0, l = 0, u = 0, d = 0;
+	if (x + 1 < COL)
+		if (table[x + 1][y] != '-') u = 1;
+	if (x - 1 >= 0)
+		if (table[x - 1][y] != '-') d = 1;
+	if (y + 1 < ROW)
+		if (table[x][y + 1] != '-') r = 1;
+	if (y - 1 >= 0)
+		if (table[x][y - 1] != '-') l = 1;
+	if (u == 1 || d == 1 || l == 1 || r == 1) return true;
+	else return false;
+}
+
+void AI_logic::find_words(int x, int y, int new_x, int new_y, string temp_word) {
+	if (temp_word.size() >= ai_temp_words.cur_max_len) return;
+	auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x);
+	auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y);
+	if ((find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()) && matrix[x][y] == 63 && new_x == -1) {
+		temp_word += matrix[x][y];
+		new_x = x;
+		new_y = y;
+		if (temp_word.size() > 1) {
+			ai_temp_words.words.push(temp_word);
+			ai_temp_words.coordinates.first.push(new_x);
+			ai_temp_words.coordinates.second.push(new_y);
+			ai_temp_words.pc_moves.first.push_back(x);
+			ai_temp_words.pc_moves.second.push_back(y);
+		}
+		if (x + 1 < ROW) {
+			auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x + 1);
+			auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y);
+			if (matrix[x + 1][y] != 63 && matrix[x + 1][y] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
+				find_words(x + 1, y, new_x, new_y, temp_word);
+		}
+			
+		if (x - 1 > 0) {
+			auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x - 1);
+			auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y);
+			if (matrix[x - 1][y] != 63 && matrix[x - 1][y] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
+				find_words(x - 1, y, new_x, new_y, temp_word);
+		}
+		if (y + 1 < COL) {
+			auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x);
+			auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y + 1);
+			if (matrix[x][y + 1] != 63 && matrix[x][y + 1] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
+				find_words(x, y + 1, new_x, new_y, temp_word);
+		}
+		if (y - 1 > 0) {
+			auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x);
+			auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y - 1);
+			if (matrix[x][y - 1] != 63 && matrix[x][y - 1] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
+				find_words(x, y - 1, new_x, new_y, temp_word);
+		}
+		return;
+	}
+	else if (matrix[x][y] != 63 && matrix[x][y] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end())) {
+		temp_word += matrix[x][y];
+		if (new_x != -1 && temp_word.size() > 1) {
+			ai_temp_words.words.push(temp_word);
+			ai_temp_words.coordinates.first.push(new_x);
+			ai_temp_words.coordinates.second.push(new_y);
+			ai_temp_words.pc_moves.first.push_back(x);
+			ai_temp_words.pc_moves.second.push_back(y);
+		}
+		if (x + 1 < ROW) {
+			auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x + 1);
+			auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y);
+			if (matrix[x + 1][y] != 63 && matrix[x + 1][y] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
+				find_words(x + 1, y, new_x, new_y, temp_word);
+			else if (matrix[x + 1][y] == 63 && new_x == -1 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
+				find_words(x + 1, y, new_x, new_y, temp_word);
+		}
+
+		if (x - 1 > 0) {
+			auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x - 1);
+			auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y);
+			if (matrix[x - 1][y] != 63 && matrix[x - 1][y] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
+				find_words(x - 1, y, new_x, new_y, temp_word);
+			else if (matrix[x - 1][y] == 63 && new_x == -1 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
+				find_words(x - 1, y, new_x, new_y, temp_word);
+		}
+		if (y + 1 < COL) {
+			auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x);
+			auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y + 1);
+			if (matrix[x][y + 1] != 63 && matrix[x][y + 1] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
+				find_words(x, y + 1, new_x, new_y, temp_word);
+			else if (matrix[x][y + 1] == 63 && new_x == -1 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
+				find_words(x, y + 1, new_x, new_y, temp_word);
+		}
+		if (y - 1 > 0) {
+			auto find_x = find(ai_temp_words.pc_moves.first.begin(), ai_temp_words.pc_moves.first.end(), x);
+			auto find_y = find(ai_temp_words.pc_moves.second.begin(), ai_temp_words.pc_moves.second.end(), y - 1);
+			if (matrix[x][y - 1] != 63 && matrix[x][y - 1] != 48 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
+				find_words(x, y - 1, new_x, new_y, temp_word);
+			else if (matrix[x][y - 1] == 63 && new_x == -1 && (find_x == ai_temp_words.pc_moves.first.end() || find_y == ai_temp_words.pc_moves.second.end()))
+				find_words(x, y - 1, new_x, new_y, temp_word);
+		}
+		return;
+	}
+
+}
+
+void AI_logic::filter() {
+	string temp_word;
+	string let;
+	while (!ai_temp_words.words.empty()) {
+		for (char i = 97; i <= 122; i++) {
+			let = i;
+			temp_word = ai_temp_words.words.front();
+			temp_word.replace(temp_word.find('?'), 1, let);
+
+			auto lib_temp = find(library.begin(), library.end(), temp_word);
+			auto custom_lib_temp = custom_library.find(temp_word);
+			auto temp_used_fwords = find(f_player.pl_words.begin(), f_player.pl_words.end(), temp_word);
+			auto temp_used_swords = find(s_player.pl_words.begin(), s_player.pl_words.end(), temp_word);
+			if (temp_used_fwords == f_player.pl_words.end() && temp_used_swords == s_player.pl_words.end())
+				if (lib_temp != library.end() || custom_lib_temp != custom_library.end()) {
+					ai_words.words.push_back(temp_word);
+					ai_words.letters.push_back(i);
+					ai_words.letter_coordinates.first.push_back(ai_temp_words.coordinates.first.front());
+					ai_words.letter_coordinates.second.push_back(ai_temp_words.coordinates.second.front());
+				}
+		}
+		ai_temp_words.coordinates.first.pop();
+		ai_temp_words.coordinates.second.pop();
+		ai_temp_words.words.pop();
+	}
+	
+}
+
+void AI_logic::choose_word() {
+	int random_index;
+	random_index = rand() % ai_words.words.size();
+	current_word = ai_words.words[random_index];
+	table[ai_words.letter_coordinates.first[random_index]][ai_words.letter_coordinates.second[random_index]] = ai_words.letters[random_index];
+	ai_words.words.clear();
+	ai_words.letters.clear();
+	ai_words.letter_coordinates.first.clear();
+	ai_words.letter_coordinates.second.clear();
 }
